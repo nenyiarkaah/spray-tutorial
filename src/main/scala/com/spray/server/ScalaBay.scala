@@ -1,15 +1,16 @@
 package com.spray.server
 
 import akka.actor.{Actor, ActorSystem, Props}
-import com.spray.models.{MultiCrystalSilicon, Silicon}
+import com.spray.models.{MultiCrystalSilicon, MyJsonProtocol, Silicon, SiliconIndex}
 import spray.http.MediaTypes
 import spray.routing.{RequestContext, Route, SimpleRoutingApp}
 import akka.pattern.ask
 import akka.util.Timeout
+import spray.httpx.SprayJsonSupport._
 
 import scala.concurrent.duration._
 
-object ScalaBay extends App with SimpleRoutingApp {
+object ScalaBay extends App with SimpleRoutingApp with MyJsonProtocol {
   implicit val actorSystem = ActorSystem()
   import actorSystem.dispatcher
   implicit val timeout = Timeout(1.second)
@@ -52,33 +53,49 @@ object ScalaBay extends App with SimpleRoutingApp {
     }
   }
 
+  lazy val detailsRoute =
+    path("silicon" / "details") {
+      respondWithMediaType(MediaTypes.`application/json`) {
+//        get {
+          entity(as[SiliconIndex]) { siliconIndex =>
+            complete {
+              Silicon.toJson(plentyOfSilicon(siliconIndex.value))
+            }
+          }
+//        }
+      }
+    }
+
   startServer(interface = "localhost", port = 8080) {
     helloRoute ~
       helloRoute2 ~
-    burnRoute ~
-    getJson {
-      path("list" / "all") {
-        complete {
-          Silicon.toJson(plentyOfSilicon)
-        }
-      }
-    } ~
-    get {
-      path("silicon" / IntNumber / "details") { index =>
-        complete { Silicon.toJson(plentyOfSilicon(index))}
-      }
-    } ~
-    post {
-      path("silicon" / "add") {
-        parameters("name" ?, "grainSize".as[Int]) { (name, grainSize) =>
-          val newSilicon = MultiCrystalSilicon(name.getOrElse("Multicrystalline"), grainSize)
-          plentyOfSilicon = newSilicon :: plentyOfSilicon
+      burnRoute ~
+      getJson {
+        path("list" / "all") {
           complete {
-            "Ok"
+            Silicon.toJson(plentyOfSilicon)
+          }
+        }
+      } ~
+      detailsRoute ~
+      get {
+        path("silicon" / IntNumber / "details") { index =>
+          complete {
+            Silicon.toJson(plentyOfSilicon(index))
+          }
+        }
+      } ~
+      post {
+        path("silicon" / "add") {
+          parameters("name" ?, "grainSize".as[Int]) { (name, grainSize) =>
+            val newSilicon = MultiCrystalSilicon(name.getOrElse("Multicrystalline"), grainSize)
+            plentyOfSilicon = newSilicon :: plentyOfSilicon
+            complete {
+              "Ok"
+            }
           }
         }
       }
-    }
   }
 
 

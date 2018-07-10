@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.6",
   "com.typesafe.akka" %% "akka-http-experimental" % "0.7",
 //  "io.spray" %% "spray-io" % sprayVersion,
+  "io.spray" %%  "spray-json" % "1.3.4",
   "io.spray" %% "spray-routing" % sprayVersion,
   "io.spray" %% "spray-client" % sprayVersion,
   "io.spray" %% "spray-testkit" % sprayVersion % "test",
